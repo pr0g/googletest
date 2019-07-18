@@ -268,17 +268,15 @@ class UntypedOnCallSpecBase {
     kWillByDefault
   };
 
+  // @begin tomhh move
   // Asserts that the ON_CALL() statement has a certain property.
   void AssertSpecProperty(bool property,
-                          const std::string& failure_message) const {
-    Assert(property, file_, line_, failure_message);
-  }
+                          const std::string& failure_message) const;
 
   // Expects that the ON_CALL() statement has a certain property.
   void ExpectSpecProperty(bool property,
-                          const std::string& failure_message) const {
-    Expect(property, file_, line_, failure_message);
-  }
+                          const std::string& failure_message) const;
+  // @end tomhh move
 
   const char* file_;
   int line_;
@@ -577,22 +575,20 @@ class ExpectationSet {
   // An object stored in the set.  This is an alias of Expectation.
   typedef Expectation::Set::value_type value_type;
 
+  // @begin tomhh move
   // Constructs an empty set.
-  ExpectationSet() {}
+  ExpectationSet();
 
   // This single-argument ctor must not be explicit, in order to support the
   //   ExpectationSet es = EXPECT_CALL(...);
   // syntax.
-  ExpectationSet(internal::ExpectationBase& exp) {  // NOLINT
-    *this += Expectation(exp);
-  }
+  ExpectationSet(internal::ExpectationBase& exp); // NOLINT
 
   // This single-argument ctor implements implicit conversion from
   // Expectation and thus must not be explicit.  This allows either an
   // Expectation or an ExpectationSet to be used in .After().
-  ExpectationSet(const Expectation& e) {  // NOLINT
-    *this += e;
-  }
+  ExpectationSet(const Expectation& e); // NOLINT
+  // @end tomhh move
 
   // The compiler-generator ctor and operator= works exactly as
   // intended, so we don't need to define our own.
@@ -627,8 +623,11 @@ class ExpectationSet {
 // on the compiler-defined copy constructor and assignment operator).
 class GTEST_API_ Sequence {
  public:
+
+  // @begin tomhh move
   // Constructs an empty sequence.
-  Sequence() : last_expectation_(new Expectation) {}
+  Sequence();
+  // @end tomhh move
 
   // Adds an expectation to this sequence.  The caller must ensure
   // that no other thread is accessing this Sequence object.
@@ -743,17 +742,15 @@ class GTEST_API_ ExpectationBase {
   // expectation.
   virtual Expectation GetHandle() = 0;
 
+  // @begin tomhh move
   // Asserts that the EXPECT_CALL() statement has the given property.
   void AssertSpecProperty(bool property,
-                          const std::string& failure_message) const {
-    Assert(property, file_, line_, failure_message);
-  }
+                          const std::string& failure_message) const;
 
   // Expects that the EXPECT_CALL() statement has the given property.
   void ExpectSpecProperty(bool property,
-                          const std::string& failure_message) const {
-    Expect(property, file_, line_, failure_message);
-  }
+                          const std::string& failure_message) const;
+  // @end tomhh move
 
   // Explicitly specifies the cardinality of this expectation.  Used
   // by the subclasses to implement the .Times() clause.
@@ -776,40 +773,26 @@ class GTEST_API_ ExpectationBase {
   void RetireAllPreRequisites()
       GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex);
 
+  // @begin tomhh move
   // Returns true iff this expectation is retired.
   bool is_retired() const
-      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
-    g_gmock_mutex.AssertHeld();
-    return retired_;
-  }
+      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex);
 
   // Retires this expectation.
   void Retire()
-      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
-    g_gmock_mutex.AssertHeld();
-    retired_ = true;
-  }
+      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex);
 
   // Returns true iff this expectation is satisfied.
   bool IsSatisfied() const
-      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
-    g_gmock_mutex.AssertHeld();
-    return cardinality().IsSatisfiedByCallCount(call_count_);
-  }
+      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex);
 
   // Returns true iff this expectation is saturated.
   bool IsSaturated() const
-      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
-    g_gmock_mutex.AssertHeld();
-    return cardinality().IsSaturatedByCallCount(call_count_);
-  }
+      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex);
 
   // Returns true iff this expectation is over-saturated.
   bool IsOverSaturated() const
-      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
-    g_gmock_mutex.AssertHeld();
-    return cardinality().IsOverSaturatedByCallCount(call_count_);
-  }
+      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex);
 
   // Returns true iff all pre-requisites of this expectation are satisfied.
   bool AllPrerequisitesAreSatisfied() const
@@ -821,17 +804,12 @@ class GTEST_API_ ExpectationBase {
 
   // Returns the number this expectation has been invoked.
   int call_count() const
-      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
-    g_gmock_mutex.AssertHeld();
-    return call_count_;
-  }
+      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex);
 
   // Increments the number this expectation has been invoked.
   void IncrementCallCount()
-      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
-    g_gmock_mutex.AssertHeld();
-    call_count_++;
-  }
+      GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex);
+  // @end tomhh move
 
   // Checks the action count (i.e. the number of WillOnce() and
   // WillRepeatedly() clauses) against the cardinality if this hasn't
@@ -1897,10 +1875,6 @@ using internal::MockSpec;
 //   EXPECT_CALL(Const(foo), Bar());
 template <typename T>
 inline const T& Const(const T& x) { return x; }
-
-// Constructs an Expectation object that references and co-owns exp.
-inline Expectation::Expectation(internal::ExpectationBase& exp)  // NOLINT
-    : expectation_base_(exp.GetHandle().expectation_base()) {}
 
 }  // namespace testing
 

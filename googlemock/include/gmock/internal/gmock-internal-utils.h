@@ -280,34 +280,22 @@ class FailureReporterInterface {
 // Returns the failure reporter used by Google Mock.
 GTEST_API_ FailureReporterInterface* GetFailureReporter();
 
+// @begin tomhh move
 // Asserts that condition is true; aborts the process with the given
 // message if condition is false.  We cannot use LOG(FATAL) or CHECK()
 // as Google Mock might be used to mock the log sink itself.  We
 // inline this function to prevent it from showing up in the stack
 // trace.
-inline void Assert(bool condition, const char* file, int line,
-                   const std::string& msg) {
-  if (!condition) {
-    GetFailureReporter()->ReportFailure(FailureReporterInterface::kFatal,
-                                        file, line, msg);
-  }
-}
-inline void Assert(bool condition, const char* file, int line) {
-  Assert(condition, file, line, "Assertion failed.");
-}
+void Assert(bool condition, const char* file, int line,
+                   const std::string& msg);
+void Assert(bool condition, const char* file, int line);
 
 // Verifies that condition is true; generates a non-fatal failure if
 // condition is false.
-inline void Expect(bool condition, const char* file, int line,
-                   const std::string& msg) {
-  if (!condition) {
-    GetFailureReporter()->ReportFailure(FailureReporterInterface::kNonfatal,
-                                        file, line, msg);
-  }
-}
-inline void Expect(bool condition, const char* file, int line) {
-  Expect(condition, file, line, "Expectation failed.");
-}
+void Expect(bool condition, const char* file, int line,
+            const std::string& msg);
+void Expect(bool condition, const char* file, int line);
+// @end tomhh move
 
 // Severity level of a log.
 enum LogSeverity {

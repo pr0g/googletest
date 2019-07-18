@@ -59,7 +59,105 @@
 #endif
 
 namespace testing {
+
+// @begin tomhh move
+Sequence::Sequence() : last_expectation_(new Expectation) {}
+
+// Constructs an Expectation object that references and co-owns exp.
+Expectation::Expectation(internal::ExpectationBase& exp)  // NOLINT
+    : expectation_base_(exp.GetHandle().expectation_base()) {}
+
+// Constructs an empty set.
+ExpectationSet::ExpectationSet() {}
+
+// This single-argument ctor must not be explicit, in order to support the
+//   ExpectationSet es = EXPECT_CALL(...);
+// syntax.
+ExpectationSet::ExpectationSet(internal::ExpectationBase& exp) {  // NOLINT
+  *this += Expectation(exp);
+}
+
+// This single-argument ctor implements implicit conversion from
+// Expectation and thus must not be explicit.  This allows either an
+// Expectation or an ExpectationSet to be used in .After().
+ExpectationSet::ExpectationSet(const Expectation& e) {  // NOLINT
+  *this += e;
+}
+
 namespace internal {
+
+// Returns true iff this expectation is retired.
+bool ExpectationBase::is_retired() const {
+  g_gmock_mutex.AssertHeld();
+  return retired_;
+}
+
+// Retires this expectation.
+void ExpectationBase::Retire()
+    GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
+  g_gmock_mutex.AssertHeld();
+  retired_ = true;
+}
+
+// Returns true iff this expectation is satisfied.
+bool ExpectationBase::IsSatisfied() const
+    GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
+  g_gmock_mutex.AssertHeld();
+  return cardinality().IsSatisfiedByCallCount(call_count_);
+}
+
+// Returns true iff this expectation is saturated.
+bool ExpectationBase::IsSaturated() const
+    GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
+  g_gmock_mutex.AssertHeld();
+  return cardinality().IsSaturatedByCallCount(call_count_);
+}
+
+// Returns true iff this expectation is over-saturated.
+bool ExpectationBase::IsOverSaturated() const
+    GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
+  g_gmock_mutex.AssertHeld();
+  return cardinality().IsOverSaturatedByCallCount(call_count_);
+}
+
+  // Returns the number this expectation has been invoked.
+int ExpectationBase::call_count() const
+    GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
+  g_gmock_mutex.AssertHeld();
+  return call_count_;
+}
+
+// Increments the number this expectation has been invoked.
+void ExpectationBase::IncrementCallCount()
+    GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
+  g_gmock_mutex.AssertHeld();
+  call_count_++;
+}
+
+// Asserts that the EXPECT_CALL() statement has the given property.
+void ExpectationBase::AssertSpecProperty(bool property,
+                        const std::string& failure_message) const {
+  Assert(property, file_, line_, failure_message);
+}
+
+// Expects that the EXPECT_CALL() statement has the given property.
+void ExpectationBase::ExpectSpecProperty(bool property,
+                        const std::string& failure_message) const {
+  Expect(property, file_, line_, failure_message);
+}
+
+  // Asserts that the ON_CALL() statement has a certain property.
+void UntypedOnCallSpecBase::AssertSpecProperty(bool property,
+                        const std::string& failure_message) const {
+  Assert(property, file_, line_, failure_message);
+}
+
+// Expects that the ON_CALL() statement has a certain property.
+void UntypedOnCallSpecBase::ExpectSpecProperty(bool property,
+                        const std::string& failure_message) const {
+  Expect(property, file_, line_, failure_message);
+}
+// @end tomhh move
 
 // Protects the mock object registry (in class Mock), all function
 // mockers, and all expectations.

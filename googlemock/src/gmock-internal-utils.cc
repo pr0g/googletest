@@ -46,6 +46,32 @@
 namespace testing {
 namespace internal {
 
+// @begin tomhh move
+void Expect(bool condition, const char* file, int line,
+                   const std::string& msg) {
+  if (!condition) {
+    GetFailureReporter()->ReportFailure(FailureReporterInterface::kNonfatal,
+                                        file, line, msg);
+  }
+}
+
+void Expect(bool condition, const char* file, int line) {
+  Expect(condition, file, line, "Expectation failed.");
+}
+
+void Assert(bool condition, const char* file, int line,
+                   const std::string& msg) {
+  if (!condition) {
+    GetFailureReporter()->ReportFailure(FailureReporterInterface::kFatal,
+                                        file, line, msg);
+  }
+}
+
+void Assert(bool condition, const char* file, int line) {
+  Assert(condition, file, line, "Assertion failed.");
+}
+// @end tomhh move
+
 // Joins a vector of strings as if they are fields of a tuple; returns
 // the joined string.
 GTEST_API_ std::string JoinAsTuple(const Strings& fields) {
